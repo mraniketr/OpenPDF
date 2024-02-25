@@ -219,7 +219,7 @@ public class PdfDocument extends Document {
             PdfString date = new PdfDate();
             put(PdfName.CREATIONDATE, date);
         }
-        
+
         /**
          * Adds the modification date (=current date and time) to the document.
          */
@@ -672,13 +672,22 @@ public class PdfDocument extends Document {
                     indentation.indentRight += listItem.getIndentationRight();
                     leading = listItem.getTotalLeading();
                     carriageReturn();
-
-                    // we prepare the current line to be able to show us the listsymbol
-                    line.setListItem(listItem);
-                    // we process the item
-                    element.process(this);
-
-                    addSpacing(listItem.getSpacingAfter(), listItem.getTotalLeading(), listItem.getFont());
+                    // if a listItem has to be kept together, we wrap it in a table object
+                    if(listItem.getKeepTogether()){
+                        carriageReturn();
+                        PdfPTable table = createInOneCell(listItem);
+                        indentation.indentLeft -= listItem.getIndentationLeft();
+                        indentation.indentRight -= listItem.getIndentationRight();
+                        this.add(table);
+                        indentation.indentLeft += listItem.getIndentationLeft();
+                        indentation.indentRight += listItem.getIndentationRight();
+                    }else {
+                        // we prepare the current line to be able to show us the listsymbol
+                        line.setListItem(listItem);
+                        // we process the item
+                        element.process(this);
+                        addSpacing(listItem.getSpacingAfter(), listItem.getTotalLeading(), listItem.getFont());
+                    }
 
                     // if the last line is justified, it should be aligned to the left
                     if (line.hasToBeJustified()) {
